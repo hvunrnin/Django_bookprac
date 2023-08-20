@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>My Books</title>
+</head>
+<body>
+    <h2>{{ request.user.user_id }}님의 도서 목록</h2>
+    <!-- 사용자 아이디에 해당하는 도서 목록을 표시하는 코드 등을 추가 -->
+    <ul>
+        {% for book_item in lists %}
+            <li>{{ book_item.title }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'custom_logout' %}">로그아웃</a>
+</body>
+</html>

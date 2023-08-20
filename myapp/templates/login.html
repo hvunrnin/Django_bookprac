@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Write Form</title>
+</head>
+<body>
+    <h2>로그인</h2>
+    <form action="http://localhost:8000/userpage/" method="POST" id="loginForm">
+        {% csrf_token %}
+        <input type="text" name="userid" placeholder="아이디">
+        <br><input type="password" name="password" placeholder="비밀번호">
+        <br><button type="submit">로그인</button>
+    </form>
+    <p>계정이 없으신가요? <a href="{% url 'createForm' %}">회원가입하기</a></p>
+</body>
+</html>
