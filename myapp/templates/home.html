@@ -9,3 +9,8 @@
     <p><a href="{% url 'createForm' %}">회원가입하기</a></p>
 </body>
 </html>
+<form class="d-flex" action="{% url 'api_book_search' %}" method="GET">
+    {% csrf_token %}
+    <input name="q" class="form-control me-2" type="search" placeholder="search in naver" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">🔍</button>
+</form>

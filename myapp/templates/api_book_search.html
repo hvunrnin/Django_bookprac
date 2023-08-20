@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Search API</title>
+</head>
+<body>
+    <h1>Book Search Results</h1>
+    <ul>
+        {% for item in items %}
+            <li>
+                <h2>{{ item.title }}</h2>
+                <p>Author: {{ item.author }}</p>
+                <p>Published: {{ item.pubdate }}</p>
+                <p>Price: {{ item.price }}</p>
+                <p>Link: <a href="{{ item.link }}" target="_blank">{{ item.link }}</a></p>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

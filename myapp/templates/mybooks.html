@@ -5,13 +5,35 @@
     <title>My Books</title>
 </head>
 <body>
+    <h2>전체 도서 목록</h2>
+    <!-- 사용자 아이디에 해당하는 도서 목록을 표시하는 코드 등을 추가 -->
+    <ul>
+        {% for book_item in lists_all %}
+            <li>
+                {{ book_item.title }}
+                <form method="post" action="{% url 'add_user_book' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ request.user.id }}">
+                    <input type="hidden" name="book_id" value="{{ book_item.id }}">
+                    <button type="submit">추가하기</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
     <h2>{{ request.user.user_id }}님의 도서 목록</h2>
     <!-- 사용자 아이디에 해당하는 도서 목록을 표시하는 코드 등을 추가 -->
     <ul>
-        {% for book_item in lists %}
+        {% for book_item in lists_user %}
             <li>{{ book_item.title }}</li>
+            <form method="post" action="{% url 'delete_user_book' %}">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ request.user.id }}">
+                <input type="hidden" name="book_id" value="{{ book_item.id }}">
+                <button type="submit">삭제하기</button>
+            </form>
         {% endfor %}
     </ul>
+
 
     <a href="{% url 'custom_logout' %}">로그아웃</a>
 </body>
