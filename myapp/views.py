@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 import urllib3
 from .models import CustomUser, Book, UserBook
 from .serializers import CustomUserSerializer, BookSerializer, UserBookSerializer
@@ -12,9 +11,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 import urllib.request
+import urllib.parse
 import json
+from rest_framework.views import APIView
 import os
 import sys
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 class CustomUserview(viewsets.ModelViewSet):
@@ -156,10 +159,12 @@ def api_book_search(request):
         # config_secret_debug = json.loads(open(settings.SECRET_DEBUG_FILE).read())
         # client_id = config_secret_debug['NAVER']['CLIENT_ID']
         # client_secret = config_secret_debug['NAVER']['CLIENT_SECRET']
-        
+
         client_id = "71GX1MGulezdAHHJXWQk"
         client_secret = "IJlwpjxdQk"
-        encText = urllib.parse.quote("파이썬")
+        #encText = urllib.parse.quote("파이썬")
+        query = request.GET.get('q', '')  # 검색어 가져오기
+        encText = urllib.parse.quote(query)
         url = "https://openapi.naver.com/v1/search/book?query=" + encText  # json 결과
         book_api_request = urllib.request.Request(url)
         book_api_request.add_header("X-Naver-Client-Id",client_id)
@@ -174,6 +179,72 @@ def api_book_search(request):
             context = {
                 'items': items
             }
-            return render(request, 'api_book_search.html', context=context)
+            return render(request, 'home.html', context=context)
     else:
-        return render(request, 'api_book_search.html')
+        return render(request, 'home.html')
+
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticatedOrReadOnly])  # 인증된 사용자만 접근 가능
+def save_user_book(request, isbn):
+    if request.method == 'POST':
+        user = request.user  # 로그인한 사용자
+        try:
+            existing_book = UserBook.objects.get(isbn=isbn, user=user)
+            return Response({"message": "이미 저장된 책입니다."}, status=400)
+        except UserBook.DoesNotExist:
+            # 네이버 도서 OpenAPI 데이터를 기반으로 UserBook 모델 인스턴스 생성
+            data = {  # 플러터 앱으로부터 전달받은 데이터를 사용하여 생성
+                "user": user.id,
+                "title": request.data.get("title", ""),
+                "author": request.data.get("author", ""),
+                "pubdate": request.data.get("pubdate", None),
+                "isbn": isbn,
+                "publisher": request.data.get("publisher", ""),
+                # ... 필요한 필드들 ...
+            }
+            serializer = UserBookSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+
+
+
+class User(APIView):
+    def post(self, request): #회원 생성
+        serializer = CustomUserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request): #리스트 가져오기
+        users = CustomUser.objects.all()
+        serializer = CustomUserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, user_id): #회원 수정
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CustomUserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, user_id): #회원 삭제
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

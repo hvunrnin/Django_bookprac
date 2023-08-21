@@ -9,9 +9,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields=('id', 'title','author','publication_year','genre','publisher')
+        fields=('id', 'title','author','pubdate','isbn','publisher', 'image')
 
 class UserBookSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserBook
-        fields=('id', 'user', 'title','author','publication_year','genre','publisher', 'state')
+        fields=('id', 'user', 'title','author','pubdate','isbn','publisher', 'image', 'state')

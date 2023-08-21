@@ -13,8 +13,12 @@
                 <h2>{{ item.title }}</h2>
                 <p>Author: {{ item.author }}</p>
                 <p>Published: {{ item.pubdate }}</p>
-                <p>Price: {{ item.price }}</p>
-                <p>Link: <a href="{{ item.link }}" target="_blank">{{ item.link }}</a></p>
+                <p>Publisher : {{ item.publisher }}</p>
+                <p>ISBN : {{ item.isbn }}</p>
+                <!-- <p>Description : {{ item.description }}</p> -->
+                <p><img src="{{ item.image }}" alt="Book Image"></p>
+                <!-- <p>Price: {{ item.price }}</p>
+                <p>Link: <a href="{{ item.link }}" target="_blank">{{ item.link }}</a></p> -->
             </li>
         {% endfor %}
     </ul>

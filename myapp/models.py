@@ -16,9 +16,10 @@ class CustomUser(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
-    publication_year = models.PositiveIntegerField()
-    genre = models.CharField(max_length=50, null=True, blank=True)
+    pubdate = models.DateTimeField(null=True, blank=True)
+    isbn = models.PositiveIntegerField()
     publisher = models.CharField(max_length=100, null=True, blank=True)
+    image = models.ImageField(upload_to='book_images/', null=True, blank=True)
 
     def __str__(self):
         return self.title
@@ -37,9 +38,10 @@ class UserBook(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=None)  
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
-    publication_year = models.PositiveIntegerField()
-    genre = models.CharField(max_length=50, null=True, blank=True)
+    pubdate = models.DateTimeField(null=True, blank=True)
+    isbn = models.PositiveIntegerField()
     publisher = models.CharField(max_length=100, null=True, blank=True)
+    image = models.ImageField(upload_to='book_images/', null=True, blank=True)
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default=TO_READ)
 
     def __str__(self):

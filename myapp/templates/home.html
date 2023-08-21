@@ -11,6 +11,25 @@
 </html>
 <form class="d-flex" action="{% url 'api_book_search' %}" method="GET">
     {% csrf_token %}
-    <input name="q" class="form-control me-2" type="search" placeholder="search in naver" aria-label="Search">
+    <input name="q" class="form-control me-2" type="search" placeholder="책 제목 검색" aria-label="Search">
     <button class="btn btn-outline-success" type="submit">🔍</button>
 </form>
+
+{% if items %}
+    <h1>Book Search Results</h1>
+    <ul>
+        {% for item in items %}
+            <li>
+                <h2>{{ item.title }}</h2>
+                <p>Author: {{ item.author }}</p>
+                <p>Published: {{ item.pubdate }}</p>
+                <p>Publisher : {{ item.publisher }}</p>
+                <p>ISBN : {{ item.isbn }}</p>
+                <!-- <p>Description : {{ item.description }}</p> -->
+                <p><img src="{{ item.image }}" alt="Book Image"></p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No search results.</p>
+{% endif %}

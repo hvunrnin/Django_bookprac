@@ -21,5 +21,8 @@ urlpatterns = [
     path('delete_user_book/', views.delete_user_book, name='delete_user_book'),
     path('mybooks/', views.mybooks, name='mybooks'), 
     path('api_book_search', views.api_book_search, name='api_book_search'),
-    path('test/', views.test)
+    path('test/', views.test),
+    path('api/saveUserbook/<int:userid>/<int:isbn>', views.save_user_book, name='save_user_book'),
+
+    path('api/user/', views.User.as_view(), name='user-api'),
 ]
