@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-import urllib3
 from .models import CustomUser, Book, UserBook
 from .serializers import CustomUserSerializer, BookSerializer, UserBookSerializer
 from rest_framework.generics import ListAPIView
@@ -17,7 +16,21 @@ from rest_framework.views import APIView
 import os
 import sys
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
+
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.hashers import check_password
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import BasePermission
+
+class NoAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        return None  # 인증을 비활성화하기 위해 None을 반환
+
+class NoPermission(BasePermission):
+    def has_permission(self, request, view):
+        return True  # 권한을 비활성화하기 위해 항상 True 반환
+
 
 # Create your views here.
 class CustomUserview(viewsets.ModelViewSet):
@@ -82,6 +95,8 @@ def custom_login(request):
             return HttpResponseRedirect(reverse('main'))  # 로그인 실패 시 메인 페이지로 이동
     else:
         return HttpResponse("")
+    
+        
 
 def custom_logout(request):
     logout(request)
@@ -162,7 +177,6 @@ def api_book_search(request):
 
         client_id = "71GX1MGulezdAHHJXWQk"
         client_secret = "IJlwpjxdQk"
-        #encText = urllib.parse.quote("파이썬")
         query = request.GET.get('q', '')  # 검색어 가져오기
         encText = urllib.parse.quote(query)
         url = "https://openapi.naver.com/v1/search/book?query=" + encText  # json 결과
@@ -216,6 +230,9 @@ def save_user_book(request, isbn):
 
 
 class User(APIView):
+    authentication_classes = [NoAuthentication]
+    permission_classes = [NoPermission]
+
     def post(self, request): #회원 생성
         serializer = CustomUserSerializer(data=request.data)
         if serializer.is_valid():
@@ -248,3 +265,32 @@ class User(APIView):
         
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+class UserLogin(APIView):
+    authentication_classes = [NoAuthentication]
+    permission_classes = [NoPermission]
+
+    def post(self, request):
+        userid = request.data.get('user_id')
+        password = request.data.get('user_password')
+        
+        # try:
+        #     user = CustomUser.objects.get(user_id=userid)
+        #     if check_password(password, user.user_password):
+        #         response_data = {'message': 'Login successful', 'user_id': user.id}
+        #         return Response(response_data, status=status.HTTP_200_OK)
+        #     else:
+        #         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        # except CustomUser.DoesNotExist:
+        #     return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            user = CustomUser.objects.get(user_id=userid)
+            if user and user.user_password == password:
+                response_data = {'message': 'Login successful', 'user_id': user.id}
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)

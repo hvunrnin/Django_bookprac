@@ -24,5 +24,8 @@ urlpatterns = [
     path('test/', views.test),
     path('api/saveUserbook/<int:userid>/<int:isbn>', views.save_user_book, name='save_user_book'),
 
+
     path('api/user/', views.User.as_view(), name='user-api'),
+    path('api/user/<str:user_id>/', views.User.as_view(), name='user-detail'),
+    path('login/', views.UserLogin.as_view(), name='user-login'),
 ]
