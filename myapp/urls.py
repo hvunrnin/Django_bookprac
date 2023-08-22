@@ -9,7 +9,7 @@ router.register('UserBook', views.UserBookview)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls')),
+    #path('api-auth/', include('rest_framework.urls')),
     path('hello_drf/', views.hello_drf),
     path('home', views.main, name='main'),
     path('createForm/', views.createForm, name='createForm'),
@@ -25,7 +25,9 @@ urlpatterns = [
     path('api/saveUserbook/<int:userid>/<int:isbn>', views.save_user_book, name='save_user_book'),
 
 
-    path('api/user/', views.User.as_view(), name='user-api'),
+    path('api/user/', views.User.as_view(), name='user-list'),
     path('api/user/<str:user_id>/', views.User.as_view(), name='user-detail'),
+
+    path('login/<str:user_id>/', views.UserLogin.as_view(), name='user-detail'),
     path('login/', views.UserLogin.as_view(), name='user-login'),
 ]

@@ -23,13 +23,13 @@ from django.contrib.auth.hashers import check_password
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import BasePermission
 
-class NoAuthentication(BaseAuthentication):
-    def authenticate(self, request):
-        return None  # 인증을 비활성화하기 위해 None을 반환
+# class NoAuthentication(BaseAuthentication):
+#     def authenticate(self, request):
+#         return None  # 인증을 비활성화하기 위해 None을 반환
 
-class NoPermission(BasePermission):
-    def has_permission(self, request, view):
-        return True  # 권한을 비활성화하기 위해 항상 True 반환
+# class NoPermission(BasePermission):
+#     def has_permission(self, request, view):
+#         return True  # 권한을 비활성화하기 위해 항상 True 반환
 
 
 # Create your views here.
@@ -230,8 +230,8 @@ def save_user_book(request, isbn):
 
 
 class User(APIView):
-    authentication_classes = [NoAuthentication]
-    permission_classes = [NoPermission]
+    # authentication_classes = [NoAuthentication]
+    # permission_classes = [NoPermission]
 
     def post(self, request): #회원 생성
         serializer = CustomUserSerializer(data=request.data)
@@ -240,9 +240,19 @@ class User(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def get(self, request): #리스트 가져오기
-        users = CustomUser.objects.all()
-        serializer = CustomUserSerializer(users, many=True)
+    def get(self, request, user_id=None):  # user_id를 매개변수로 받음
+        if user_id is None:  # user_id가 주어지지 않은 경우 (리스트 가져오기)
+            users = CustomUser.objects.all()
+            serializer = CustomUserSerializer(users, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        # user_id가 주어진 경우 (특정 사용자 조회)
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CustomUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def put(self, request, user_id): #회원 수정
@@ -265,12 +275,43 @@ class User(APIView):
         
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    
-class UserLogin(APIView):
-    authentication_classes = [NoAuthentication]
-    permission_classes = [NoPermission]
 
+@api_view(['GET'])
+def test_get(self, request): #리스트 가져오기
+        users = CustomUser.objects.all()
+        serializer = CustomUserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+@api_view(['GET'])
+def get_detail(self, request, user_id): #특정 사용자 조회
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserLogin(APIView):
+    # authentication_classes = [NoAuthentication]
+    # permission_classes = [NoPermission]
+    def get(self, request, user_id=None):  # user_id를 매개변수로 받음
+        if user_id is None:  # user_id가 주어지지 않은 경우 (리스트 가져오기)
+            users = CustomUser.objects.all()
+            serializer = CustomUserSerializer(users, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        # user_id가 주어진 경우 (특정 사용자 조회)
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
     def post(self, request):
         userid = request.data.get('user_id')
         password = request.data.get('user_password')
