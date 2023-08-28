@@ -4,7 +4,7 @@ from django.db import models
 class CustomUser(models.Model):
     user_name = models.CharField(max_length=100)
     user_email = models.EmailField(max_length=100)
-    user_id = models.CharField(max_length=50)
+    user_id = models.CharField(max_length=50, primary_key=True)
     user_password = models.CharField(max_length=50)
     user_date = models.DateTimeField(auto_now_add=True)
 
@@ -17,7 +17,7 @@ class Book(models.Model):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
     pubdate = models.DateTimeField(null=True, blank=True)
-    isbn = models.PositiveIntegerField()
+    isbn = models.PositiveIntegerField(primary_key=True)
     publisher = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='book_images/', null=True, blank=True)
 

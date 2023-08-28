@@ -168,7 +168,7 @@ def mybooks(request):
 
 
 #book api 
-def api_book_search(request):
+def api_book_search1(request):
 
     if request.method == 'GET':
         # config_secret_debug = json.loads(open(settings.SECRET_DEBUG_FILE).read())
@@ -177,8 +177,8 @@ def api_book_search(request):
 
         client_id = "71GX1MGulezdAHHJXWQk"
         client_secret = "IJlwpjxdQk"
-        query = request.GET.get('q', '')  # 검색어 가져오기
-        encText = urllib.parse.quote(query)
+        #query = request.GET.get('q', '')  # 검색어 가져오기
+        encText = urllib.parse.quote("파이썬")
         url = "https://openapi.naver.com/v1/search/book?query=" + encText  # json 결과
         book_api_request = urllib.request.Request(url)
         book_api_request.add_header("X-Naver-Client-Id",client_id)
@@ -198,34 +198,6 @@ def api_book_search(request):
         return render(request, 'home.html')
 
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
-
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticatedOrReadOnly])  # 인증된 사용자만 접근 가능
-def save_user_book(request, isbn):
-    if request.method == 'POST':
-        user = request.user  # 로그인한 사용자
-        try:
-            existing_book = UserBook.objects.get(isbn=isbn, user=user)
-            return Response({"message": "이미 저장된 책입니다."}, status=400)
-        except UserBook.DoesNotExist:
-            # 네이버 도서 OpenAPI 데이터를 기반으로 UserBook 모델 인스턴스 생성
-            data = {  # 플러터 앱으로부터 전달받은 데이터를 사용하여 생성
-                "user": user.id,
-                "title": request.data.get("title", ""),
-                "author": request.data.get("author", ""),
-                "pubdate": request.data.get("pubdate", None),
-                "isbn": isbn,
-                "publisher": request.data.get("publisher", ""),
-                # ... 필요한 필드들 ...
-            }
-            serializer = UserBookSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=201)
-            return Response(serializer.errors, status=400)
 
 
 
@@ -335,3 +307,74 @@ class UserLogin(APIView):
 
         except CustomUser.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+import requests
+from django.http import JsonResponse   
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import requests
+import urllib.parse
+
+class BookSearchAPI(APIView):
+    def get(self, request, query):
+        client_id = "71GX1MGulezdAHHJXWQk"
+        client_secret = "IJlwpjxdQk"
+        encText = urllib.parse.quote(query)  # query 값을 책 이름으로 사용
+        url = "https://openapi.naver.com/v1/search/book?query=" + encText
+        headers = {
+            "X-Naver-Client-Id": client_id,
+            "X-Naver-Client-Secret": client_secret
+        }
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            result = response.json()
+            items = result.get('items')
+            return Response(items, status=status.HTTP_200_OK)
+        
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, query):
+        # POST 요청을 처리하고 데이터를 저장하는 로직을 여기에 추가합니다.
+        # 네이버 도서 API에서 책 정보를 얻어와 UserBook 모델에 저장하는 예시를 들 수 있습니다.
+        user_id = request.data.get('user_id')  # 사용자의 user_id 값을 가져옴
+        user = CustomUser.objects.get(user_id=user_id)
+        client_id = "71GX1MGulezdAHHJXWQk"
+        client_secret = "IJlwpjxdQk"
+        encText = urllib.parse.quote(query)  # query 값을 책 이름으로 사용
+        url = "https://openapi.naver.com/v1/search/book?query=" + encText
+        headers = {
+            "X-Naver-Client-Id": client_id,
+            "X-Naver-Client-Secret": client_secret
+        }
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            result = response.json()
+            items = result.get('items')
+
+            # 사용자가 선택한 책 상태
+            selected_state = request.data.get('state', UserBook.TO_READ)
+            
+            # 얻은 책 정보를 UserBook 모델에 저장
+            for book_data in items:
+                user = CustomUser.objects.get(user_id=request.user.user_id)  # 예시로 현재 로그인한 사용자를 가져옴
+                UserBook.create_from_api(user, book_data)
+                
+            return Response(items, status=status.HTTP_200_OK)
+        
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserBookList(APIView):
+    def get(self, request, user_id, state=None):
+        if state is None:
+            user_books = UserBook.objects.filter(user__user_id=user_id)
+        else:
+            user_books = UserBook.objects.filter(user__user_id=user_id, state=state)
+        serialized_books = UserBookSerializer(user_books, many=True).data
+        return Response(serialized_books, status=status.HTTP_200_OK)
