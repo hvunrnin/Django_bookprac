@@ -324,7 +324,7 @@ class BookSearchAPI(APIView):
         client_id = "71GX1MGulezdAHHJXWQk"
         client_secret = "IJlwpjxdQk"
         encText = urllib.parse.quote(query)  # query 값을 책 이름으로 사용
-        url = "https://openapi.naver.com/v1/search/book?query=" + encText
+        url = "https://openapi.naver.com/v1/search/book?query=" + encText + "&display=100"
         headers = {
             "X-Naver-Client-Id": client_id,
             "X-Naver-Client-Secret": client_secret
@@ -370,6 +370,74 @@ class BookSearchAPI(APIView):
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
 
+import urllib.parse
+import requests
+from rest_framework import status
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from .models import UserBook
+
+def save_user_book(request, user_id, isbn_str):
+    isbn = int(isbn_str)  # 문자열로 받은 ISBN을 정수로 변환
+    user_book = get_user_book_from_isbn(user_id, isbn)
+    
+    if user_book is None:
+        # 해당 isbn으로 검색하여 UserBook 생성하는 코드
+        book_info = get_book_info_from_isbn(isbn)
+        if book_info is not None:
+            user = get_object_or_404(CustomUser, id=user_id)
+            user_book = UserBook(
+                user=user,
+                title=book_info['title'],
+                author=book_info['author'],
+                pubdate=book_info['pubdate'],
+                isbn=isbn,
+                publisher=book_info['publisher'],
+                image=book_info['image'],
+                state=UserBook.TO_READ
+            )
+            user_book.save()
+            return Response({'message': 'UserBook saved successfully'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'message': 'Book information not found'}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        return Response({'message': 'UserBook already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+def get_user_book_from_isbn(user_id, isbn):
+    try:
+        return UserBook.objects.get(user_id=user_id, isbn=isbn)
+    except UserBook.DoesNotExist:
+        return None
+
+def get_book_info_from_isbn(isbn):
+    client_id = "71GX1MGulezdAHHJXWQk"
+    client_secret = "IJlwpjxdQk"
+    encText = urllib.parse.quote(isbn)  # ISBN 값을 사용
+    url = "https://openapi.naver.com/v1/search/book?query=" + encText
+    headers = {
+        "X-Naver-Client-Id": client_id,
+        "X-Naver-Client-Secret": client_secret
+    }
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        items = result.get('items')
+        if items:
+            # 여기서 items 중에서 필요한 정보를 추출하여 딕셔너리로 반환하면 됩니다.
+            # 예시: {'title': 'Book Title', 'author': 'Author Name', ...}
+            # 실제 API 응답 형식에 따라 결과를 가공해야 합니다.
+            book_info = {
+                'title': items[0].get('title'),
+                'author': items[0].get('author'),
+                'pubdate': items[0].get('pubdate'),
+                'publisher': items[0].get('publisher'),
+                'image': items[0].get('image'),
+            }
+            return book_info
+    return None
+
+
 class UserBookList(APIView):
     def get(self, request, user_id, state=None):
         if state is None:
@@ -378,3 +446,39 @@ class UserBookList(APIView):
             user_books = UserBook.objects.filter(user__user_id=user_id, state=state)
         serialized_books = UserBookSerializer(user_books, many=True).data
         return Response(serialized_books, status=status.HTTP_200_OK)
+    
+    def post(selt, request, user_id, isbn):
+        client_id = "71GX1MGulezdAHHJXWQk"
+        client_secret = "IJlwpjxdQk"
+        encText = urllib.parse.quote(isbn)  # ISBN 값을 사용
+        url = "https://openapi.naver.com/v1/search/book?query=" + encText
+        headers = {
+            "X-Naver-Client-Id": client_id,
+            "X-Naver-Client-Secret": client_secret
+        }
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            items = result.get('items')
+            if items:
+                book_info = {
+                    'title' : items[0].get('title'),
+                    'author' : items[0].get('author'),
+                    'pubdate' : items[0].get('pubdate'),
+                    'isbn' : items[0].get('isbn'),
+                    'publisher' : items[0].get('publisher'),
+                    'image' : items[0].get('image'),
+                }
+        
+        user_book = UserBook(
+            user = user_id,
+            title = book_info['title'],
+            author=book_info['author'],
+            pubdate=book_info['pubdate'],
+            isbn=isbn,
+            publisher=book_info['publisher'],
+            image=book_info['image'],
+            state=UserBook.TO_READ
+        )
+        user_book.save()

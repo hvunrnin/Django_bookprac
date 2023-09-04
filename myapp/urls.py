@@ -26,14 +26,20 @@ urlpatterns = [
     #path('api/saveUserbook/<int:userid>/<int:isbn>', views.save_user_book, name='save_user_book'),
 
 
+    # 회원가입
     path('api/user/', views.User.as_view(), name='user-list'),
     path('api/user/<str:user_id>/', views.User.as_view(), name='user-detail'),
 
+    # 로그인
     path('login/<str:user_id>/', views.UserLogin.as_view(), name='user-detail'),
     path('login/', views.UserLogin.as_view(), name='user-login'),
 
+    # 제목으로 OPEN API에서 책 찾기
     path('openapi/<str:query>/', views.BookSearchAPI.as_view(), name='api_book_search'),
 
+    # 사용자 책
     path('userbook/<str:user_id>/', views.UserBookList.as_view(), name='userbook'),
-    path('userbook/<str:user_id>/<str:state>/', views.UserBookList.as_view(), name='userbook-detail')
+    path('userbook/<str:user_id>/<str:state>/', views.UserBookList.as_view(), name='userbook-detail'),
+
+      path('userbooksave/<str:user_id>/<isbn_str>/', views.save_user_book, name='save_user_book'),
 ]
